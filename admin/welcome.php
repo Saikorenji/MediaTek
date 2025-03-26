@@ -1,31 +1,32 @@
 <?php
-include_once "../utils/function.php";
-startSecureSession();
-
-// Redirection si l'utilisateur n'est pas connecté
-if (empty($_SESSION['is_logged']) || !isset($_SESSION['user'])) {
-    header('Location: login.php');
-    exit;
-}
-
-$user = $_SESSION['user']; // first_name, last_name, email
+include_once "../utils/auth_check.php"; // Redirige si l'utilisateur n'est pas connecté
 include_once "./partials/top.php";
+
+// On récupère les infos de l'utilisateur connecté
+$firstName = $_SESSION['user']['first_name'] ?? 'Utilisateur';
+$lastName = $_SESSION['user']['last_name'] ?? '';
 ?>
 
-<div class="title-space-between">
-    <h2>Bienvenue <?= htmlspecialchars($user['first_name']) ?> <?= htmlspecialchars($user['last_name']) ?> !</h2>
-    <a href="logout.php" class="btn btn-danger">Se déconnecter</a>
-</div>
+<div class="container mt-5">
+    <h1 class="mb-4">Bienvenue, <?= htmlspecialchars($firstName . ' ' . $lastName) ?> 👋</h1>
 
-<div class="box">
-    <p>Bienvenue sur votre tableau de bord personnalisé.</p>
-    <p>Vous avez maintenant accès à toutes les fonctionnalités de la plateforme.</p>
-    <ul>
-        <li>📚 Gérer vos livres et illustrations</li>
-        <li>👤 Voir ou modifier votre profil</li>
-        <li>⚙️ Accéder à vos préférences</li>
-    </ul>
-    <p><a href="profile.php" class="btn btn-primary">Voir mon profil</a></p>
+    <div class="alert alert-info">
+        Vous êtes connecté à votre compte personnel MediaTek.
+    </div>
+
+    <div class="mt-4">
+        <a href="dashboard.php" class="btn btn-secondary me-2">
+            <i class="light-icon-dashboard"></i> Dashboard
+        </a>
+
+        <a href="profile_edit.php" class="btn btn-primary me-2">
+            <i class="light-icon-pencil"></i> Modifier mon profil
+        </a>
+
+        <a href="logout.php" class="btn btn-danger">
+            <i class="light-icon-logout"></i> Se déconnecter
+        </a>
+    </div>
 </div>
 
 <?php include_once "./partials/bottom.php"; ?>

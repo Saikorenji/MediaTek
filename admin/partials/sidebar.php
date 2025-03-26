@@ -7,7 +7,7 @@
                     <li><a href="#" title="Gestion des auteurs"><i class="light-icon-users"></i> Auteurs</a></li>
                     <li><a href="#" title="Gestion des catégories"><i class="light-icon-sitemap"></i> Catégories</a></li>
                     <li><a href="#" title="Gestion des technologies"><i class="light-icon-tools"></i> Technologies</a></li>
-                    <li><a href="#" title="Gestion du profil"><i class="light-icon-user"></i> Profil</a></li>
+                    <li><a href="./profile.php" title="Gestion du profil"><i class="light-icon-user"></i> Profil</a></li>
                     <li><a href="#" title="Gestion des préférences"><i class="light-icon-settings"></i> Préférences</a></li>
                     <li><a href="./login_form.php" title="Se connecter"><i class="light-icon-login"></i> Se connecter</a></li>
                     <!-- <li><a href="./logout.php" title="Se déconnecter"><i class="light-icon-logout"></i> Se déconnecter</a></li> -->

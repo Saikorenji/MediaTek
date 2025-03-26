@@ -2,6 +2,12 @@
 include_once "../utils/function.php";
 startSecureSession();
 
+if (!isset($_SESSION['is_logged']) || $_SESSION['is_logged'] !== true) {
+    header("Location: login.php");
+    exit;
+}
+
+
 include_once "../utils/db_connect.php";
 include_once "../utils/regex.php";
 include_once "./partials/top.php";

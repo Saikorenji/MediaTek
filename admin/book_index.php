@@ -1,5 +1,13 @@
 <?php
 
+include_once "../utils/function.php";
+startSecureSession();
+
+if (!isset($_SESSION['is_logged']) || $_SESSION['is_logged'] !== true) {
+    header("Location: login.php");
+    exit;
+}
+
 include_once "./partials/top.php";
 
 ?>

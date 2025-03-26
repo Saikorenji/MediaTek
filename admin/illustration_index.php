@@ -8,8 +8,8 @@ include_once "./partials/top.php";
 // FIXME: Export sensitive data elsewhere
 $host = 'localhost';
 $dbName = 'mediatek';
-$user = 'mentor'; // Your MySQL user username
-$pass = 'superMentor'; // Your MySQL user password
+$user = 'root'; // Your MySQL user username
+$pass = 'Ren55HELL'; // Your MySQL user password
 
 $connection = new PDO("mysql:host=$host;dbname=$dbName", $user, $pass);
 $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

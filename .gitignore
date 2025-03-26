@@ -61,6 +61,7 @@ target/
 /public/bundles/
 /var/
 /vendor/
+/utils/env.php
 
 # symfony/web-server-bundle
 /.web-server-pid

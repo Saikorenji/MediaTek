@@ -5,65 +5,46 @@ startSecureSession();
 include_once "../utils/db_connect.php";
 include_once "./partials/top.php";
 
-// Vérification de la session utilisateur
-$email = $_SESSION['user']['email'] ?? null;
+$errors = [];
+$userData = [];
 
-if (!$email) {
-    echo "<div class='alert alert-danger'>Impossible de récupérer les informations utilisateur.</div>";
-    include_once "./partials/bottom.php";
-    exit;
-}
+if (!isset($_SESSION['user']['email'])) {
+    echo "<p class='alert alert-danger'>Impossible de récupérer les informations utilisateur.</p>";
+} else {
+    try {
+        $pdo = getPDO();
+        $query = "SELECT * FROM user WHERE email = :email LIMIT 1";
+        $stmt = $pdo->prepare($query);
+        $stmt->execute([':email' => $_SESSION['user']['email']]);
+        $userData = $stmt->fetch();
 
-// Récupération des infos utilisateur
-try {
-    $query = "SELECT id, first_name, last_name, email, birth_date, created_at, updated_at FROM user WHERE email = :email LIMIT 1";
-    $statement = $pdo->prepare($query);
-    $statement->execute([':email' => $email]);
-    $user = $statement->fetch(PDO::FETCH_ASSOC);
+        if (!$userData) {
+            echo "<p class='alert alert-danger'>Utilisateur non trouvé.</p>";
+        } else {
+            ?>
+            <div class="container mt-4">
+                <h2>Profil de <?= htmlspecialchars($userData['first_name']) ?> <?= htmlspecialchars($userData['last_name']) ?></h2>
+                <ul class="list-group mt-3">
+                    <li class="list-group-item"><strong>Nom :</strong> <?= htmlspecialchars($userData['last_name']) ?></li>
+                    <li class="list-group-item"><strong>Prénom :</strong> <?= htmlspecialchars($userData['first_name']) ?></li>
+                    <li class="list-group-item"><strong>Email :</strong> <?= htmlspecialchars($userData['email']) ?></li>
+                    <li class="list-group-item"><strong>Date de naissance :</strong> <?= htmlspecialchars($userData['birth_date']) ?></li>
+                    <li class="list-group-item"><strong>Inscrit le :</strong> <?= htmlspecialchars($userData['created_at']) ?></li>
+                </ul>
 
-    if (!$user) {
-        echo "<div class='alert alert-warning'>Utilisateur non trouvé dans la base de données.</div>";
-        include_once "./partials/bottom.php";
-        exit;
+                <!-- ✅ Bouton Modifier mon profil -->
+                <div class="mt-3">
+                    <a href="profile_edit.php" class="btn btn-primary">
+                        <i class="light-icon-pencil"></i> Modifier mon profil
+                    </a>
+                </div>
+            </div>
+            <?php
+        }
+    } catch (PDOException $e) {
+        echo "<p class='alert alert-danger'>Erreur lors de la récupération du profil : " . $e->getMessage() . "</p>";
     }
-} catch (PDOException $e) {
-    echo "<div class='alert alert-danger'>Erreur : " . $e->getMessage() . "</div>";
-    include_once "./partials/bottom.php";
-    exit;
 }
+
+include_once "./partials/bottom.php";
 ?>
-
-<div class="title-space-between">
-    <h4>Profil de <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></h4>
-</div>
-
-<table class="striped">
-    <tbody>
-        <tr>
-            <th>Nom :</th>
-            <td><?= htmlspecialchars($user['last_name']) ?></td>
-        </tr>
-        <tr>
-            <th>Prénom :</th>
-            <td><?= htmlspecialchars($user['first_name']) ?></td>
-        </tr>
-        <tr>
-            <th>Email :</th>
-            <td><?= htmlspecialchars($user['email']) ?></td>
-        </tr>
-        <tr>
-            <th>Date de naissance :</th>
-            <td><?= date('d/m/Y', strtotime($user['birth_date'])) ?></td>
-        </tr>
-        <tr>
-            <th>Inscrit le :</th>
-            <td><?= date('d/m/Y à H:i', strtotime($user['created_at'])) ?></td>
-        </tr>
-        <tr>
-            <th>Dernière modification :</th>
-            <td><?= date('d/m/Y à H:i', strtotime($user['updated_at'])) ?></td>
-        </tr>
-    </tbody>
-</table>
-
-<?php include_once "./partials/bottom.php"; ?>

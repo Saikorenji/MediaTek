@@ -1,25 +1,23 @@
 <?php
 include_once "../utils/function.php";
-startSecureSession();
-
 include_once "../utils/regex.php";
+
+startSecureSession();
 include_once "./partials/top.php";
 
 $errors = [];
 $successes = [];
 
-// [1] Vérification du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_POST['secret_code']) && preg_match($validPatterns['six_digits_code'], $_POST['secret_code'])) {
         $secretCode = trim($_POST['secret_code']);
 
         if (isset($_SESSION['mfa_validation']) && $secretCode === $_SESSION['mfa_validation']) {
-            // Authentification MFA réussie
-            unset($_SESSION['mfa_validation']);
-            $successes[] = "Authentification validée.";
+            unset($_SESSION['mfa_validation']); // Suppression du code MFA (sécurité)
 
-            // Redirection vers la page d'accueil personnalisée
-            header("Location: welcome.php");
+            $_SESSION['is_logged'] = true; // Validation complète de l'utilisateur
+
+            header("Location: welcome.php"); // ✅ Redirection immédiate
             exit;
         } else {
             $errors[] = "Le code secret saisi est incorrect.";
@@ -34,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// [2] Affichage des résultats
+// Affichage des erreurs si besoin
 if (!empty($errors)) {
     echo "<ul class='alert alert-danger'>";
     foreach ($errors as $error) {

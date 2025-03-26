@@ -1,7 +1,5 @@
 <?php
-
 include_once "../utils/function.php";
-
 startSecureSession();
 
 include_once "../utils/regex.php";
@@ -10,27 +8,24 @@ include_once "./partials/top.php";
 $errors = [];
 $successes = [];
 
-/**
- * ******************** [1] Check if submitted form is valid
- */
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['secret_code']) && trim($_POST['secret_code']) !== '') {
+// [1] Vérification du formulaire
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!empty($_POST['secret_code']) && preg_match($validPatterns['six_digits_code'], $_POST['secret_code'])) {
         $secretCode = trim($_POST['secret_code']);
-        if (!preg_match($validPatterns['six_digits_code'], $secretCode)) {
-            $errors[] = "Le champ 'Code secret reçu par mail' doit être constitué de 6 chiffres (ex. : 032516).";
-        } elseif (!isset($_SESSION['mfa_validation']) || $secretCode !== $_SESSION['mfa_validation']) {
-            $errors[] = "Le code secret saisi est incorrect.";
-        } else {
-            $successes[] = "Authentification validée.";
-            unset($_SESSION['mfa_validation']);
 
-            // Redirection vers page d'accueil après succès
-            header("Location: home.php");
+        if (isset($_SESSION['mfa_validation']) && $secretCode === $_SESSION['mfa_validation']) {
+            // Authentification MFA réussie
+            unset($_SESSION['mfa_validation']);
+            $successes[] = "Authentification validée.";
+
+            // Redirection vers la page d'accueil personnalisée
+            header("Location: welcome.php");
             exit;
+        } else {
+            $errors[] = "Le code secret saisi est incorrect.";
         }
     } else {
-        $errors[] = "Le champ 'Code secret reçu par mail' est obligatoire. Merci de saisir une valeur.";
+        $errors[] = "Le champ 'Code secret' est requis et doit contenir exactement 6 chiffres.";
     }
 } else {
     $_SESSION = [];
@@ -39,17 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     exit;
 }
 
-/**
- * ******************** [2-B] Submitted form is not valid (some errors occurred)
- */
-
-if (count($errors) !== 0) {
-    $errorMsg = "<ul>";
+// [2] Affichage des résultats
+if (!empty($errors)) {
+    echo "<ul class='alert alert-danger'>";
     foreach ($errors as $error) {
-        $errorMsg .= "<li>$error</li>";
+        echo "<li>$error</li>";
     }
-    $errorMsg .= "</ul>";
-    echo $errorMsg;
+    echo "</ul>";
 }
 
 include_once "./partials/bottom.php";
+?>

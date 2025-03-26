@@ -1,30 +1,41 @@
 <?php
-include_once "./partials/top.php";
 include_once "../utils/function.php";
-
 startSecureSession();
 
-if (!isset($_SESSION['is_logged']) || !$_SESSION['is_logged']) {
-    header('Location: login.php');
+// Rediriger si l'utilisateur n'est pas connecté
+if (!isset($_SESSION['is_logged']) || $_SESSION['is_logged'] !== true || !isset($_SESSION['user'])) {
+    header("Location: login.php");
     exit;
 }
 
-$firstName = $_SESSION['user']['first_name'] ?? 'Utilisateur';
-$lastName = $_SESSION['user']['last_name'] ?? '';
+$user = $_SESSION['user'];
+$firstName = htmlspecialchars($user['first_name']);
+$lastName = htmlspecialchars($user['last_name']);
+$email = htmlspecialchars($user['email']);
+
+include_once "./partials/top.php";
 ?>
 
 <div class="title-space-between">
-    <h2>Bienvenue, <?= htmlspecialchars($firstName . ' ' . $lastName) ?> !</h2>
+    <h4>Bienvenue <?= $firstName . ' ' . $lastName ?> !</h4>
+    <p>Adresse email : <strong><?= $email ?></strong></p>
 </div>
 
-<div>
-    <p>Vous êtes bien connecté à votre espace personnel.</p>
-    <ul>
-        <li><a href="book_index.php">Voir les livres disponibles</a></li>
-        <li><a href="illustration_index.php">Voir les illustrations</a></li>
-        <li><a href="profile.php">Mon profil</a></li>
-        <li><a href="logout.php">Se déconnecter</a></li>
-    </ul>
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        🧑 Profil de l'utilisateur
+    </div>
+    <div class="card-body">
+        <p><strong>Nom :</strong> <?= $lastName ?></p>
+        <p><strong>Prénom :</strong> <?= $firstName ?></p>
+        <p><strong>Email :</strong> <?= $email ?></p>
+    </div>
 </div>
 
-<?php include_once "./partials/bottom.php"; ?>
+<div style="margin-top: 2rem;">
+    <a class="btn btn-danger" href="logout.php">Se déconnecter</a>
+</div>
+
+<?php
+include_once "./partials/bottom.php";
+?>

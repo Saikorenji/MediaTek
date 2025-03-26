@@ -1,9 +1,15 @@
 <?php
 
-include_once "./partials/top.php";
+include_once "../utils/function.php";
 
-include_once "./partials/to_implement_dialog.php";
+startSecureSession(); // Si nécessaire
 
-include_once "./partials/bottom.php";
+// Supprimer toutes les variables de session
+$_SESSION = [];
 
-?>
+// Détruire la session
+session_destroy();
+
+// Rediriger vers la page d’accueil ou de connexion
+header('Location: login_form.php');
+exit;

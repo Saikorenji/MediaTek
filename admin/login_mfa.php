@@ -4,10 +4,7 @@ include_once "../utils/function.php";
 
 startSecureSession();
 
-echo '<pre>' . var_dump($_SESSION) . '</pre>';
-
 include_once "../utils/regex.php";
-
 include_once "./partials/top.php";
 
 $errors = [];
@@ -17,48 +14,42 @@ $successes = [];
  * ******************** [1] Check if submitted form is valid
  */
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') { // Is method allowed ?
-    if (isset($_POST['secret_code']) && trim($_POST['secret_code']) !== '') { // Required field value
-        // OK
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['secret_code']) && trim($_POST['secret_code']) !== '') {
         $secretCode = trim($_POST['secret_code']);
-        if (!preg_match($validPatterns['six_digits_code'], $secretCode)) { // Format check
-            // KO
+        if (!preg_match($validPatterns['six_digits_code'], $secretCode)) {
             $errors[] = "Le champ 'Code secret reçu par mail' doit être constitué de 6 chiffres (ex. : 032516).";
-        } elseif ($secretCode !== $_SESSION['mfa_validation']) {
+        } elseif (!isset($_SESSION['mfa_validation']) || $secretCode !== $_SESSION['mfa_validation']) {
             $errors[] = "Le code secret saisi est incorrect.";
         } else {
             $successes[] = "Authentification validée.";
+            unset($_SESSION['mfa_validation']);
+
+            // Redirection vers page d'accueil après succès
+            header("Location: home.php");
+            exit;
         }
-    } else { // KO
-        $errors[] = "Le champ 'Email' est obligatoire. Merci de saisir une valeur.";
+    } else {
+        $errors[] = "Le champ 'Code secret reçu par mail' est obligatoire. Merci de saisir une valeur.";
     }
 } else {
     $_SESSION = [];
     session_destroy();
-
-    // "405 - Method Not Allowed" error handling
     header('Location: ../405.php');
     exit;
 }
 
 /**
- * ******************** [2-B] Submitted form is not valid (some errors occured)
+ * ******************** [2-B] Submitted form is not valid (some errors occurred)
  */
 
- if (count($errors) !== 0) {
+if (count($errors) !== 0) {
     $errorMsg = "<ul>";
     foreach ($errors as $error) {
         $errorMsg .= "<li>$error</li>";
     }
     $errorMsg .= "</ul>";
     echo $errorMsg;
-} else { //... or everything is OK
-    $successMsg = "<ul>";
-    foreach ($successes as $success) {
-        $successMsg .= "<li>$success</li>";
-    }
-    $successMsg .= "</ul>";
-    echo $successMsg;
 }
 
 include_once "./partials/bottom.php";

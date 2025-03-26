@@ -1,161 +1,83 @@
 <?php
 
 include_once "./partials/top.php";
-
 include_once "../utils/regex.php";
+include_once "../utils/db_connect.php"; // Connexion PDO
 
 $errors = [];
 $successes = [];
 
-/**
- * ******************** [1] Check if submitted form is valid
- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
- if ($_SERVER['REQUEST_METHOD'] == 'POST') { // Is method allowed ?
-    if (isset($_POST['last_name']) && trim($_POST['last_name']) !== '') { // Required field value
-        // OK
-        $lastName = trim($_POST['last_name']);
-        if (!preg_match($validPatterns['proper_name'], $lastName)) { // Format check
-            // KO
-            $errors[] = "Le champ 'Votre nom' doit contenir entre 1 et 50 caractères.";
-        }
-    } else { // KO
-        $errors[] = "Le champ 'Votre nom' est obligatoire. Merci de saisir une valeur.";
+    $firstName = trim(filter_input(INPUT_POST, 'first_name'));
+    $lastName = trim(filter_input(INPUT_POST, 'last_name'));
+    $birthDate = trim(filter_input(INPUT_POST, 'birth_date'));
+    $email = trim(filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL));
+    $password = trim(filter_input(INPUT_POST, 'password'));
+    $passwordConfirm = trim(filter_input(INPUT_POST, 'password_confirm'));
+
+    // [1] Validation
+    if (!$lastName || !preg_match($validPatterns['proper_name'], $lastName)) {
+        $errors[] = "Nom invalide ou manquant.";
     }
 
-    if (isset($_POST['first_name']) && trim($_POST['first_name']) !== '') { // Required field value
-        // OK
-        $firstName = trim($_POST['first_name']);
-        if (!preg_match($validPatterns['proper_name'], $firstName)) { // Format check
-            // KO
-            $errors[] = "Le champ 'Votre prénom' doit contenir entre 1 et 50 caractères.";
-        }
-    } else { // KO
-        $errors[] = "Le champ 'Votre prénom' est obligatoire. Merci de saisir une valeur.";
+    if (!$firstName || !preg_match($validPatterns['proper_name'], $firstName)) {
+        $errors[] = "Prénom invalide ou manquant.";
     }
 
-    if (isset($_POST['birth_date']) && trim($_POST['birth_date']) !== '') { // Required field value
-        // OK
-        $birthDate = trim($_POST['birth_date']);
-        if (!preg_match($validPatterns['date_hyphens_fr'], $birthDate)) { // Format check
-            // KO
-            $errors[] = "Le champ 'Votre date de naissance' doit être au format DD-MM-AAAA (ex.: 12-06-2001).";
-        }
-    } else { // KO
-        $errors[] = "Le champ 'Votre date de naissance' est obligatoire. Merci de saisir une valeur.";
+    if (!$birthDate || !preg_match($validPatterns['date_hyphens_fr'], $birthDate)) {
+        $errors[] = "Date de naissance invalide (format attendu : JJ-MM-AAAA).";
     }
 
-    if (isset($_POST['email']) && trim($_POST['email']) !== '') { // Required field value
-        // OK
-        $email = trim($_POST['email']);
-        if (!preg_match($validPatterns['email'], $email)) { // Format check
-            // KO
-            $errors[] = "Le champ 'Email' doit respecter le format d'une email (ex. : john.doe@mailbox.com).";
+    if (!$email) {
+        $errors[] = "Email invalide.";
+    } else {
+        // Vérification unicité de l'email
+        $stmt = $pdo->prepare("SELECT id FROM user WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            $errors[] = "Cet email est déjà utilisé.";
+        }
+    }
+
+    if (!$password || !preg_match($validPatterns['password_policy'], $password)) {
+        $errors[] = "Mot de passe invalide.";
+    } elseif ($password !== $passwordConfirm) {
+        $errors[] = "La confirmation ne correspond pas au mot de passe.";
+    }
+
+    // [2] Insertion si pas d'erreurs
+    if (count($errors) === 0) {
+        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+        list($day, $month, $year) = explode("-", $birthDate);
+        $mysqlBirthDate = "$year-$month-$day";
+
+        $now = (new DateTime())->format('Y-m-d H:i:s');
+
+        $stmt = $pdo->prepare("INSERT INTO user (last_name, first_name, birth_date, email, password, created_at, updated_at)
+                               VALUES (?, ?, ?, ?, ?, ?, ?)");
+
+        if ($stmt->execute([$lastName, $firstName, $mysqlBirthDate, $email, $hashedPassword, $now, $now])) {
+            $successes[] = "Votre compte a bien été créé.";
         } else {
-            // FIXME: Check if email already exists in database
+            $errors[] = "Une erreur est survenue lors de la création du compte.";
         }
-    } else { // KO
-        $errors[] = "Le champ 'Email' est obligatoire. Merci de saisir une valeur.";
     }
-
-    if (isset($_POST['password']) && trim($_POST['password']) !== '') { // Required field value
-        // OK
-        $password = trim($_POST['password']);
-        if (!preg_match($validPatterns['password_policy'], $password)) { // Format check
-            // KO
-            $errors[] = "Le champ 'Choix du mot de passe' doit  la politique de mot de passe.";
-        } else {
-            if (isset($_POST['password_confirm']) && trim($_POST['password_confirm']) !== '') { // Required field value
-                // OK
-                $passwordConfirm = trim($_POST['password_confirm']);
-                if ($passwordConfirm !== $password) { // Confirmation password equality check
-                    // KO
-                    $errors[] = "Le champ 'Confirmation du mot de passe' doit correspondre au mot de passe choisi.";
-                }
-            } else { // KO
-                $errors[] = "Le champ 'Confirmation du mot de passe' est obligatoire. Merci de saisir une valeur.";
-            }
-        }
-    } else { // KO
-        $errors[] = "Le champ 'Choix du mot de passe' est obligatoire. Merci de saisir une valeur.";
-    }
-} else { // KO
-    // "405 - Method Not Allowed" error handling
+} else {
     header('Location: ../405.php');
     exit;
 }
 
-/**
- * ******************** [2-A] Submitted form is valid ➔ Data sanitization and escaping
- */
-
- if (count($errors) === 0) {
-    // TODO: Escaping (addslashes()) is unecessary as we later use a prepared statement
-    $firstName = addslashes(htmlspecialchars($firstName, ENT_NOQUOTES | ENT_SUBSTITUTE));
-    $lastName = addslashes(htmlspecialchars($lastName, ENT_NOQUOTES | ENT_SUBSTITUTE));
-    list($day, $month, $year) = explode("-", $birthDate);
-    $mysqlBirthDate = "$year-$month-$day";
-    // TODO: Check if a user with the same email already exists in database
-    $email = addslashes(htmlspecialchars($email, ENT_NOQUOTES | ENT_SUBSTITUTE));
-    $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-
-    $currentDateTime = new DateTime();
-    $createdAt = $updatedAt = $currentDateTime->format('Y-m-d H:i:s');
-
-    /**
-     * ******************** [3] Create the corresponding record in database
-     */
-    // FIXME: Export sensitive data elsewhere
-    $host = 'localhost';
-    $dbName = 'mediatek';
-    $user = 'mentor'; // Your MySQL user username
-    $pass = 'superMentor'; // Your MySQL user password
-
-    $connection = new PDO("mysql:host=$host;dbname=$dbName", $user, $pass);
-    $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    $query  = "INSERT INTO `user` (`last_name`, `first_name`, `birth_date`, `email`, `password`, `created_at`, `updated_at`) ";
-    $query .= "VALUES (:last_name, :first_name, :birth_date, :email, :password, :created_at, :updated_at)";
-
-    $queryParams = [
-        ':last_name' => $lastName,
-        ':first_name' => $firstName,
-        ':birth_date' => $mysqlBirthDate,
-        ':email' => $email,
-        ':password' => $hashedPassword,
-        ':created_at'=> $createdAt,
-        ':updated_at'=> $updatedAt,
-    ];
-
-    $statement = $connection->prepare($query);
-
-    if ($statement->execute($queryParams)) {
-        $successes[] = 'Votre compte a bien été créé.';
-    } else {
-        $errors[] = "Une erreur s'est produite lors de la création de votre compte : veuillez contacter l'administrateur du site.";
-    }
-
-    $connection = null;
+// [3] Affichage messages
+if (!empty($errors)) {
+    echo "<div class='alert alert-danger'><ul>";
+    foreach ($errors as $e) echo "<li>" . htmlspecialchars($e) . "</li>";
+    echo "</ul></div>";
 }
-
-/**
- * ******************** [2-B] Submitted form is not valid (some errors occured)
- */
-
- if (count($errors) !== 0) {
-    $errorMsg = "<ul>";
-    foreach ($errors as $error) {
-        $errorMsg .= "<li>$error</li>";
-    }
-    $errorMsg .= "</ul>";
-    echo $errorMsg;
-} else { //... or everything is OK
-    $successMsg = "<ul>";
-    foreach ($successes as $success) {
-        $successMsg .= "<li>$success</li>";
-    }
-    $successMsg .= "</ul>";
-    echo $successMsg;
+if (!empty($successes)) {
+    echo "<div class='alert alert-success'><ul>";
+    foreach ($successes as $s) echo "<li>" . htmlspecialchars($s) . "</li>";
+    echo "</ul></div>";
 }
 
 include_once "./partials/bottom.php";

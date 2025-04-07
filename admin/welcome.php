@@ -13,20 +13,19 @@ $lastName = $_SESSION['user']['last_name'] ?? '';
     <div class="alert alert-info">
         Vous êtes connecté à votre compte personnel MediaTek.
     </div>
-
-    <div class="mt-4">
-        <a href="dashboard.php" class="btn btn-secondary me-2">
-            <i class="light-icon-dashboard"></i> Dashboard
-        </a>
-
-        <a href="profile_edit.php" class="btn btn-primary me-2">
-            <i class="light-icon-pencil"></i> Modifier mon profil
-        </a>
-
-        <a href="logout.php" class="btn btn-danger">
-            <i class="light-icon-logout"></i> Se déconnecter
-        </a>
-    </div>
+    <div class="text-center mt-4">
+    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4 mt-5">
+    <a class="btn btn-dark shadow-sm px-4 py-2" href="index.php">
+        <i class="light-icon-home me-2"></i> Accès au Dashboard
+    </a>
+    <a class="btn btn-primary shadow-sm px-4 py-2" href="profile_edit.php">
+        <i class="light-icon-pencil me-2"></i> Modifier mon profil
+    </a>
+    <a class="btn btn-danger shadow-sm px-4 py-2" href="logout.php">
+        <i class="light-icon-logout me-2"></i> Se déconnecter
+    </a>
+</div>
+</div>
 </div>
 
 <?php include_once "./partials/bottom.php"; ?>

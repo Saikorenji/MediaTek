@@ -1,13 +1,4 @@
 <?php
-
-include_once "../utils/function.php";
-startSecureSession();
-
-if (!isset($_SESSION['is_logged']) || $_SESSION['is_logged'] !== true) {
-    header("Location: login.php");
-    exit;
-}
-
 include_once "../utils/function.php";
 startSecureSession();
 
@@ -25,12 +16,19 @@ $email = htmlspecialchars($user['email']);
 include_once "./partials/top.php";
 ?>
 
+<?php if (isset($_SESSION['logout_success'])): ?>
+    <div class="alert alert-success text-center" role="alert">
+        <?= $_SESSION['logout_success'] ?>
+    </div>
+    <?php unset($_SESSION['logout_success']); ?>
+<?php endif; ?>
+
 <div class="title-space-between">
     <h4>Bienvenue <?= $firstName . ' ' . $lastName ?> !</h4>
     <p>Adresse email : <strong><?= $email ?></strong></p>
 </div>
 
-<div class="card" style="margin-top: 2rem;">
+<div class="card mt-4">
     <div class="card-header">
         🧑 Profil de l'utilisateur
     </div>
@@ -41,10 +39,11 @@ include_once "./partials/top.php";
     </div>
 </div>
 
-<div style="margin-top: 2rem;">
+<div class="mt-4 d-flex gap-2">
+    <a class="btn btn-primary" href="profile_edit.php">
+        <i class="light-icon-pencil"></i> Modifier mon profil
+    </a>
     <a class="btn btn-danger" href="logout.php">Se déconnecter</a>
 </div>
 
-<?php
-include_once "./partials/bottom.php";
-?>
+<?php include_once "./partials/bottom.php"; ?>

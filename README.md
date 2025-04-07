@@ -24,7 +24,7 @@
 
 ## Difficultés rencontrées et solutions
 
-À compléter
+- Ajout d'une option de connexion à un compte
 
 ## Bilan des acquis
 
@@ -32,7 +32,3 @@
 - À compléter
 - À compléter
 - Etc.
-
-## Remarques complémentaires
-
-À compléter, si besoin.

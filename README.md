@@ -25,10 +25,8 @@
 ## Difficultés rencontrées et solutions
 
 - Ajout d'une option de connexion à un compte
+- Captcha
 
 ## Bilan des acquis
 
-- À compléter
-- À compléter
-- À compléter
-- Etc.
+- Apprentissage en profondeur du PHP
